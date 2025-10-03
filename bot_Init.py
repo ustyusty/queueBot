@@ -10,15 +10,14 @@ class BotApp:
         self.register_handlers()
         print("🤖 Бот запущен...")
 
-
-
-
     async def post_init(self, app):
         await db.init()
         print("✅ База данных подключена.")
 
     def register_handlers(self):
         StartHandler(self.application)
+        InlineCallbackHandler(self.application)
+
 
 
     def run(self):

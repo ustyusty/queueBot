@@ -40,25 +40,55 @@ class DataBase:
                 user.last_name
             )
 
-    async def put_on_queue(self, update):
-        text = update.message.text
-        user_id = update.message.from_user.id
+    async def update_user(self, user, up): # апдейт для пользователя
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                """UPDATE users
+                SET first_name = $2, last_name = $3
+                WHERE user_id =$1
+                """,
+                user.id,
+                up.first_name,
+                up.last_name
+
+            )
+
+    async def put_on_queue(self, user):
 
         async with self.pool.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO messages (user_id, text)
-                VALUES ($1, $2)
+                INSERT INTO list_queue (user_id)
+                VALUES ($1)
                 """,
-                user_id,
-                text
+                user.id
             )
 
-    async def get_queue(self, user):
+    async def get_queue(self):
         async with self.pool.acquire() as conn:
             rows = await conn.fetch("""
-                SELECT * FROM reminders
+                SELECT * FROM list_queue
+                ORDER BY created_at ASC
             """)
             return rows
+
+    async def leave_queue(self, user):
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch("""
+                DELETE FROM list_queue
+                WHERE user_id = $1;
+            """,
+            user.id
+            )
+            return rows
+        
+    async def get_user_info(self, user_id):
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT username, first_name, last_name 
+                FROM users 
+                WHERE user_id = $1
+            """, user_id)
+            return dict(row) if row else {}
 
 db = DataBase()
