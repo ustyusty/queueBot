@@ -28,4 +28,13 @@ class InlineCallbackHandler:
             await handler(query)
 
     async def _back_to_menu(self, query):
-        await query.edit_message_text("Главное меню\nОчередь обнавляется каждый вторник и черверг после 15.00", reply_markup = MainMenuKeyboard.inline())
+        await query.edit_message_text(
+            """« Главное меню »
+                ✨ · ✦ · ✨
+                📅 Очередь сбрасывается:
+                вторник и четверг | после 16:00
+                🐞 Баги и предложения:
+                ⬤ в лс @UstyUsty
+                ✨ · ✦ · ✨""",
+            reply_markup = MainMenuKeyboard.inline()
+        )
