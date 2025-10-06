@@ -1,12 +1,15 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
+from bot.keyboards.inline import MainMenuKeyboard, CommonKeyboard
 from bot.db import db
+
 
 class StartHandler:
     def __init__(self, app: Application):
         self.app = app
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("menu", self.menu))
+        self.app.add_handler(CommandHandler("clear_queue", self._clear_queue))
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
@@ -15,12 +18,14 @@ class StartHandler:
 
     async def menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
-        keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("встать в очередь", callback_data="put_on_queue")],
-             [InlineKeyboardButton("показать очередь", callback_data="show_queue")],
-             [InlineKeyboardButton("выйти из очереди", callback_data="leave_queue")]]
-        )
+        keyboard = MainMenuKeyboard.inline()
         await update.message.reply_text(
             f"Привет, {user.first_name}! 👋 Вот что я могу для тебя сделать:",
             reply_markup=keyboard
         )
+    async def _clear_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user = update.effective_user
+        if user.id == 1007912517:
+            await db.cleanup_job()
+            keyboard = CommonKeyboard.back_to_main()
+            await update.message.reply_text("бд очищена",reply_markup=keyboard)

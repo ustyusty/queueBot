@@ -1,0 +1,30 @@
+from bot.keyboards.inline import CommonKeyboard
+class inlineCommand():
+    def __init__(self, db):
+        self.db = db
+
+    async def put_on_queue(self, query):
+        await self.db.put_on_queue(query.from_user)
+        await query.edit_message_text("✅ Ты в очереди!", reply_markup = CommonKeyboard.back_to_main())
+
+    
+    async def show_queue(self, query):
+        rows = await self.db.get_queue()
+
+        if not rows:
+            await query.edit_message_text("📭 Очередь пуста", reply_markup = CommonKeyboard.back_to_main())
+            return
+        
+        messages = []
+        for i, r in enumerate(rows, 1):
+            user_info = await self.db.get_user_info(r['user_id'])
+            name = user_info.get('first_name') or user_info.get('username') or f"User {r['user_id']}"
+            status = "✅" if r.get('is_pass') else "⏳"
+            messages.append(f"{i}. {status} {name}")
+    
+        queue_text = "📋 Очередь:\n" + "\n".join(messages)
+        await query.edit_message_text(queue_text, reply_markup = CommonKeyboard.back_to_main())
+    
+    async def leave_queue(self, query):
+        await self.db.leave_queue(query.from_user)
+        await query.edit_message_text("👋 Вышел из очереди", reply_markup = CommonKeyboard.back_to_main())

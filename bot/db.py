@@ -59,7 +59,10 @@ class DataBase:
             await conn.execute(
                 """
                 INSERT INTO list_queue (user_id)
-                VALUES ($1)
+                SELECT $1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM list_queue WHERE user_id = $1
+                )
                 """,
                 user.id
             )
@@ -90,5 +93,10 @@ class DataBase:
                 WHERE user_id = $1
             """, user_id)
             return dict(row) if row else {}
+        
+    async def cleanup_job(self):
+        async with self.pool.acquire() as conn:
+            await conn.execute("DELETE FROM list_queue WHERE created_at < NOW();")
+        
 
 db = DataBase()
