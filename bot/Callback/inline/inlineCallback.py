@@ -3,6 +3,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQuer
 from .command import inlineCommand
 from bot.keyboards.inline import MainMenuKeyboard
 from bot.db import db
+from bot.massages import main_menu
 
 class InlineCallbackHandler:
     def __init__(self, app: Application):
@@ -28,14 +29,4 @@ class InlineCallbackHandler:
             await handler(query)
 
     async def _back_to_menu(self, query):
-        await query.edit_message_text(
-            """« Главное меню »
-            ✨ · ✦ · ✨
-            📅 Очередь сбрасывается:
-            вторник и четверг | после 16:00
-
-            🐞 Баги и предложения:
-            ⬤ в лс @UstyUsty
-            ✨ · ✦ · ✨""",
-            reply_markup = MainMenuKeyboard.inline()
-        )
+        await query.edit_message_text(main_menu.text, reply_markup = MainMenuKeyboard.inline())
