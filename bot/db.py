@@ -40,7 +40,7 @@ class DataBase:
                 user.last_name
             )
 
-    async def update_user(self, user, up): # апдейт для пользователя
+    async def update_user(self, user, first_name, last_name): # апдейт для пользователя
         async with self.pool.acquire() as conn:
             await conn.execute(
                 """UPDATE users
@@ -48,8 +48,8 @@ class DataBase:
                 WHERE user_id =$1
                 """,
                 user.id,
-                up.first_name,
-                up.last_name
+                first_name,
+                last_name
 
             )
 

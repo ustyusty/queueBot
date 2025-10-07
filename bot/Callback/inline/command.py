@@ -18,9 +18,12 @@ class inlineCommand():
         messages = []
         for i, r in enumerate(rows, 1):
             user_info = await self.db.get_user_info(r['user_id'])
-            name = user_info.get('first_name') or user_info.get('username') or f"User {r['user_id']}"
+            name = user_info.get('first_name')
+            surname = user_info.get('last_name')
+            username = user_info.get('username')
             status = "✅" if r.get('is_pass') else "⏳"
-            messages.append(f"{i}. {status} {name}")
+            
+            messages.append(f"{i}. {status} {name} {surname} @{username}")
     
         queue_text = "📋 Очередь:\n" + "\n".join(messages)
         await query.edit_message_text(queue_text, reply_markup = CommonKeyboard.back_to_main())
