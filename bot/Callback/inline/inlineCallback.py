@@ -15,6 +15,7 @@ class InlineCallbackHandler:
             "show_queue": command.show_queue,
             "leave_queue": command.leave_queue,
             "back_to_menu": self._back_to_menu,
+            "done" : command.set_done,
         }
 
         self.app.add_handler(CallbackQueryHandler(self.inline_callback))

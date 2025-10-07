@@ -52,6 +52,16 @@ class DataBase:
                 last_name
 
             )
+    async def set_done_is_pass(self, user):
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                """
+            UPDATE list_queue 
+            SET is_pass = TRUE
+            WHERE user_id = $1
+            """,
+                user.id
+            )
 
     async def put_on_queue(self, user):
 
