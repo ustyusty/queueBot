@@ -23,7 +23,7 @@ class inlineCommand():
             username = user_info.get('username')
             status = "✅" if r.get('is_pass') else "⏳"
             
-            messages.append(f"{i}. {status} {name} {surname} @{username}")
+            messages.append(f"{i}. {status} {name} {surname if surname else "💩"} @{username}")
     
         queue_text = "📋 Очередь:\n" + "\n".join(messages)
         await query.edit_message_text(queue_text, reply_markup = CommonKeyboard.back_to_main())
