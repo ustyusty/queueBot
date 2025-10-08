@@ -106,7 +106,7 @@ class DataBase:
         
     async def cleanup_job(self):
         async with self.pool.acquire() as conn:
-            await conn.execute("DELETE FROM list_queue WHERE created_at < NOW();")
+            await conn.execute("DELETE FROM list_queue WHERE created_at < NOW() AND is_pass = TRUE;")
         
 
 db = DataBase()

@@ -6,7 +6,7 @@ async def cleanup_scheduler():
     while True:
         now = datetime.datetime.now()
 
-        if (now.weekday() in (1, 3) and now.hour >= 15):
+        if (now.weekday() in (1, 4) and now.hour >= 16):
             await db.cleanup_job()
             print(f"✅ Очистка завершена!")
             await asyncio.sleep(86400)

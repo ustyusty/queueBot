@@ -15,7 +15,7 @@ class inlineCommand():
         rows = await self.db.get_queue()
 
         if not rows:
-            await query.edit_message_text("📭 Очередь пуста", reply_markup = CommonKeyboard.back_to_main())
+            await query.edit_message_text("📭 Очередь пуста", reply_markup = QueueListKeyboard.not_list())
             return
         
         messages = []
@@ -29,8 +29,8 @@ class inlineCommand():
             messages.append(f"{i}. {status} {name} {surname if surname else '💩'} @{username}")
     
         queue_text = "📋 Очередь:\n" + "\n".join(messages)
-        await query.edit_message_text(queue_text, reply_markup = QueueListKeyboard.inline())
-    
+        await query.edit_message_text(queue_text, reply_markup = QueueListKeyboard.is_list())
+
     async def leave_queue(self, query):
         await self.db.leave_queue(query.from_user)
         await self.show_queue(query)

@@ -6,6 +6,7 @@ from bot.massages import main_menu
 
 
 class CommandCallbackHandler:
+    
     def __init__(self, app: Application):
         self.app = app
         self.app.add_handler(CommandHandler("start", self.start))
@@ -24,11 +25,10 @@ class CommandCallbackHandler:
             main_menu.text,
             reply_markup=keyboard
         )
+
     async def _clear_queue(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
         if user.id == 1007912517:
             await db.cleanup_job()
             keyboard = CommonKeyboard.back_to_main()
             await update.message.reply_text("бд очищена",reply_markup=keyboard)
-        
-    
