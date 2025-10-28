@@ -2,24 +2,30 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 class MainMenuKeyboard:
     @staticmethod
     def inline() -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Очередь на императив", callback_data="show_queue")]]
-            )
+        buttons = [
+            [InlineKeyboardButton("Очередь A", callback_data="show_queue_A")],
+            [InlineKeyboardButton("Очередь B", callback_data="show_queue_B")],
+            [InlineKeyboardButton("Очередь C", callback_data="show_queue_C")]
+        ]
+        return InlineKeyboardMarkup(buttons)
 
 class QueueListKeyboard:
     @staticmethod
-    def is_list() -> InlineKeyboardMarkup:
+    def is_list(queue_id: str) -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ Я сдал!", callback_data="done")],
-            [InlineKeyboardButton("Встать в очередь", callback_data="put_on_queue")],
-            [InlineKeyboardButton("Выйти из очереди", callback_data="leave_queue")],
+            [InlineKeyboardButton("✅ Я сдал!", callback_data=f"done_{queue_id}")],
+            [InlineKeyboardButton("Встать в очередь", callback_data=f"put_on_queue_{queue_id}")],
+            [InlineKeyboardButton("Выйти из очереди", callback_data=f"leave_queue_{queue_id}")],
             [InlineKeyboardButton("🏠 Главное меню", callback_data="back_to_menu")]
         ])
-    def not_list() -> InlineKeyboardMarkup:
+
+    @staticmethod
+    def not_list(queue_id: str) -> InlineKeyboardMarkup:
         return InlineKeyboardMarkup([
-            [InlineKeyboardButton("Встать в очередь", callback_data="put_on_queue")],
+            [InlineKeyboardButton("Встать в очередь", callback_data=f"put_on_queue_{queue_id}")],
             [InlineKeyboardButton("🏠 Главное меню", callback_data="back_to_menu")]
         ])
+    
     
 class CommonKeyboard:
     @staticmethod

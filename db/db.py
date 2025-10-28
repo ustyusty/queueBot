@@ -14,7 +14,6 @@ class DataBase:
             database=os.getenv("POSTGRES_DB"),
             host=os.getenv("POSTGRES_HOST"),
             port=int(os.getenv("POSTGRES_PORT", 5432)),
-            max_inactive_connection_lifetime=10.0,
         )
         print("✅ Подключение к базе прошло успешно")
 
@@ -22,5 +21,7 @@ class DataBase:
         if self.pool:
             await self.pool.close()
             print("🔒 Соединение с базой закрыто")
+
+    
 
 db = DataBase()

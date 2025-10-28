@@ -2,10 +2,10 @@ from telegram.ext import Application
 from bot.Callback.inline.inlineCallback import InlineCallbackHandler
 from bot.Callback.cmd.cmdCallback import CommandCallbackHandler
 from bot.Callback.cmd.regCallback import RegistrationHandler
-from bot.db import db
-from bot.scheduler import cleanup_scheduler
+from db.db import db
+#from bot.scheduler import cleanup_scheduler
 import asyncio
-class BotApp:
+class BotApp: 
     def __init__(self, token: str):
         self.application = Application.builder().token(token).post_init(self.post_init).build()
         self.register_handlers()
@@ -13,8 +13,7 @@ class BotApp:
 
     async def post_init(self, app):
         await db.init()
-        print("✅ База данных подключена.")
-        asyncio.create_task(cleanup_scheduler())
+        #asyncio.create_task(cleanup_scheduler())
 
     def register_handlers(self):
         self._handlers = [

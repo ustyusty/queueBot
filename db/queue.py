@@ -12,17 +12,46 @@ class QUEUE:
                     INSERT INTO "list_queue"
                     (user_id, pack_id, priority_queue)
                     VALUES ($1, $2, $3)
+                    ON CONFLICT (user_id, pack_id) DO NOTHING
                     """,
                     user_id,
                     pack_id,
                     priority
                 )
 
-    async def get_queue(self):
+    async def get_queue(self, pack_id):
         # вытаскивает всю инфу из таблицы list_queue
+        
         async with self.pool.acquire() as conn:
             return await conn.fetch(
             """
             SELECT *
             FROM "list_queue"
-            """)
+            WHERE pack_id = $1
+            """, 
+            pack_id)
+
+    async def set_is_pass(self, user_id, pack_id):
+        # устанавливает is_pass в True для пользователя в очереди
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE "list_queue"
+                SET is_pass = TRUE
+                WHERE user_id = $1 AND pack_id = $2
+                """,
+                user_id,
+                pack_id
+            )
+    async def leave_queue(self, user_id: int, pack_id: int) -> bool:
+        # удаляет пользователя из очереди
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                """
+                DELETE FROM "list_queue"
+                WHERE user_id = $1 AND pack_id = $2
+                """,
+                user_id,
+                pack_id
+            )
+        return True
