@@ -1,13 +1,10 @@
-# Используем официальный образ PostgreSQL
-FROM postgres:16-alpine
+FROM python:3.11-slim
 
-# Устанавливаем переменные окружения
-ENV POSTGRES_DB=botDb
-ENV POSTGRES_USER=Usty
-ENV POSTGRES_PASSWORD=12345678
+WORKDIR /newQueueBot
 
-# Копируем SQL скрипты для инициализации (опционально)
-COPY init-scripts/ /docker-entrypoint-initdb.d/
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Открываем порт PostgreSQL
-EXPOSE 5000
+COPY . .
+
+CMD ["python", "app.py"]

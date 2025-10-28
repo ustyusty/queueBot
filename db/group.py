@@ -6,13 +6,15 @@ class GROUP:
     async def get_group(self, title: str):
         #вытаскивает id группы по его тайтлу
         async with self.pool.acquire() as conn:
-            return await conn.fetchval(
+            result = await conn.fetchval(
             """
             SELECT id
             FROM "group"
             WHERE title = $1
             """,
             title)
+
+        return result if result is not None else await self.add_group(title)
 
     async def add_group(self, title: str):
         #добавляет групппу
@@ -24,4 +26,5 @@ class GROUP:
                 ON CONFLICT (title) DO NOTHING
                 """,
             title)
+    
     

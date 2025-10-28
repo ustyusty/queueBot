@@ -34,6 +34,7 @@ CREATE TABLE "user" (
     group_id INTEGER REFERENCES "group"(id) ON DELETE SET NULL,
     firstname VARCHAR(255),
     surname VARCHAR(255),
+    username VARCHAR(255),
     put_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

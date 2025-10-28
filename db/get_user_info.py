@@ -29,3 +29,11 @@ class USERINFO:
         user_id = await self.get_user_id(tg_id)
         return await self.get_user_info(user_id)
     
+    async def user_exists(self, tg_id: int) -> bool:
+        async with self.pool.acquire() as connection:
+            result = await connection.fetchrow(
+                """SELECT 1 FROM "user" WHERE tg_id = $1""", tg_id
+            )
+            return result is not None
+    
+    

@@ -1,15 +1,16 @@
 services:
   db:
-    image: postgres:15
+    image: postgres:16
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./db:/docker-entrypoint-initdb.d
+      - ./init-scripts:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+
 
   bot:
     build: .

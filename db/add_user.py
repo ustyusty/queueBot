@@ -1,21 +1,15 @@
 from .db import db
 from .group import GROUP
 class ADDUSER:
-    def __init__(self, user):
-        self.user = user
+    def __init__(self):
         self.pool = db.pool
-        self.user_id = user.id
-        self.username = user.username
-        self.firstname = user.firstname
-        self.surname = user.lastname
 
-
-    async def register_user(self):
+    async def register_user(self, user, first_name, last_name, usergroup="47"):
         """
         Добавляет пользователя вместе с Telegram и группой.
         Если уже есть, обновляет данные.
         """
-        group_id = await GROUP().get_group(self.user.group)
+        group_id = await GROUP().get_group(usergroup)
 
         async with self.pool.acquire() as conn:
             async with conn.transaction():
@@ -23,16 +17,19 @@ class ADDUSER:
 
                 await conn.execute(
                     """
-                    INSERT INTO "user" (tg_id, group_id, firstname, surname)
-                    VALUES ($1, $2, $3, $4)
+                    INSERT INTO "user" (tg_id, group_id, firstname, surname, username)
+                    VALUES ($1, $2, $3, $4, $5)
                     ON CONFLICT (tg_id)
                     DO UPDATE SET
                         group_id = EXCLUDED.group_id,
                         firstname = EXCLUDED.firstname,
-                        surname = EXCLUDED.surname;
+                        surname = EXCLUDED.surname,
+                        username = EXCLUDED.username;
                     """,
-                    self.user_id,
+                    user.id,
                     group_id,
-                    self.firstname,
-                    self.surname
+                    first_name,
+                    last_name,
+                    user.username
                 )
+    
