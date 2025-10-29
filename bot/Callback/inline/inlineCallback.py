@@ -8,8 +8,8 @@ from bot.massages import main_menu
 class InlineCallbackHandler:
     def __init__(self, app: Application):
         self.app = app
-        self.db = db
-        command = inlineCommand(self.db, 1)  # Pass additional argument if needed
+        if db.pool: print("pool lives into callback")
+        command = inlineCommand(db)  # Pass additional argument if needed
         # Create callback map for multiple queues
         self.callback_map = {"back_to_menu": self._back_to_menu}
         
@@ -29,6 +29,7 @@ class InlineCallbackHandler:
         query = update.callback_query
         if query.data.split('_')[0] =="show":
             context.user_data["step"] = query.data.split('_')[-1]  # Extract course title from callback data
+        print(context.user_data)
         print(f"⚡ Пришёл callback: {query.data}", flush=True)
         await query.answer()
 
@@ -36,5 +37,5 @@ class InlineCallbackHandler:
         if handler:
             await handler(query, context)
 
-    async def _back_to_menu(self, query):
-        await query.edit_message_text(main_menu.text, reply_markup = MainMenuKeyboard.inline())
+    async def _back_to_menu(self, query, context):
+        await query.edit_message_text(main_menu.text, reply_markup=MainMenuKeyboard.inline())

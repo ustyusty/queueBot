@@ -62,3 +62,6 @@ CREATE TABLE list_queue (
     is_pass BOOLEAN DEFAULT FALSE,
     put_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE list_queue
+ADD CONSTRAINT unique_user_pack UNIQUE (user_id, pack_id);

@@ -1,4 +1,3 @@
-from db.db import db
 from db.add_user import ADDUSER
 from db.get_user_info import USERINFO
 from db.courses import COURSES
@@ -6,42 +5,36 @@ from db.pack import PACK
 from db.queue import QUEUE
 from db.group import GROUP
 import asyncio
-import datetime
-
-
-class User:
-    def __init__(self, id, username = None, firstname=None, surname=None, group = None):
-        self.id = id
-        self.username = username
-        self.firstname = firstname
-        self.lastname = surname
-        self.group = group
+from datetime import date
+import asyncpg
+from dotenv import load_dotenv
+import os
+import time
+class DataBase:
+    def __init__(self):
+        load_dotenv()
+        self.pool = None
     
-class Pack:
-    def __init__(self, ):
-        pass
+    async def init(self):
+        self.pool = await asyncpg.create_pool(
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            database=os.getenv("POSTGRES_DB"),
+            host="localhost",
+            port=int(os.getenv("POSTGRES_PORT", 5432)),
+            
+        )
+        print("✅ Подключение к базе прошло успешно")
+
+
 
 async def main():
+    db = DataBase()
     await db.init()
-
-    # user = User(id = 7347273, firstname="Нта", surname="Никиич", group="47")
-    # adduser = ADDUSER(user)
-    # await adduser.register_user()
-
-    # userinfo = USERINFO()
-    # info = await userinfo.GUI(7347273)
-
-    # await COURSES().add_courses("imper")
-
-    # await PACK().add_pack("5", datetime.date(2025, 10, 29), "imper")
-    # pack_id = await PACK().get_pack("5")
-
-    # await QUEUE().put_on_queue(info["id"], pack_id, 10)
-    a = await QUEUE().get_queue()
-    for row in a:
-        print(row)
-    
-    await db.close()
+    courses_titles = ['A', 'B', 'C']
+    for i in range(len(courses_titles)):
+        course_id = await COURSES(db).get_course_id_by_title(courses_titles[i])
+        await PACK(db).add_pack(courses_titles[i], course_id)
 
 
 if __name__ == "__main__":

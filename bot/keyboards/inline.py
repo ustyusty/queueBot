@@ -3,9 +3,9 @@ class MainMenuKeyboard:
     @staticmethod
     def inline() -> InlineKeyboardMarkup:
         buttons = [
-            [InlineKeyboardButton("Очередь A", callback_data="show_queue_A")],
-            [InlineKeyboardButton("Очередь B", callback_data="show_queue_B")],
-            [InlineKeyboardButton("Очередь C", callback_data="show_queue_C")]
+            [InlineKeyboardButton("Очередь на Императив", callback_data="show_queue_A")],
+            [InlineKeyboardButton("Очередь на Машинки", callback_data="show_queue_B")],
+            [InlineKeyboardButton("Очередь на Асик", callback_data="show_queue_C")]
         ]
         return InlineKeyboardMarkup(buttons)
 

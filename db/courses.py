@@ -1,6 +1,5 @@
-from .db import db
 class COURSES:
-    def __init__(self):
+    def __init__(self, db):
         self.pool = db.pool
 
     async def get_course_id_by_title(self, title: str):

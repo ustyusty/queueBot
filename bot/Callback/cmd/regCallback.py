@@ -62,7 +62,7 @@ class RegistrationHandler:
 
         user = update.effective_user
 
-        await ADDUSER().register_user(user, context.user_data["first_name"], context.user_data["last_name"])
+        await ADDUSER(db).register_user(user, context.user_data["first_name"], context.user_data["last_name"])
 
         await update.message.reply_text(
             f"✅ Спасибо, {context.user_data['first_name']}! "
@@ -70,7 +70,7 @@ class RegistrationHandler:
             reply_markup=CommonKeyboard.back_to_main()
         )
 
-        await ADDUSER().register_user(user, context.user_data["first_name"], context.user_data["last_name"])
+        await ADDUSER(db).register_user(user, context.user_data["first_name"], context.user_data["last_name"])
 
         context.user_data.clear()
         return ConversationHandler.END
