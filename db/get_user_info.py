@@ -1,6 +1,5 @@
-from .db import db
 class USERINFO:
-    def __init__(self):
+    def __init__(self, db):
         self.pool = db.pool
 
     async def get_user_id(self, tg_id):

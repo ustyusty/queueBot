@@ -1,6 +1,5 @@
-from .db import db
 class QUEUE:
-    def __init__(self):
+    def __init__(self, db):
         self.pool = db.pool
 
     async def put_on_queue(self, user_id, pack_id, priority):
@@ -18,18 +17,20 @@ class QUEUE:
                     pack_id,
                     priority
                 )
+        print(f"User {user_id} has been added to the queue for pack {pack_id}")
 
-    async def get_queue(self, pack_id):
-        # вытаскивает всю инфу из таблицы list_queue
+    async def get_queue(self, course_id):
+        # вытаскивает всю инфу из таблицы list_queue, связанной с курсом
         
         async with self.pool.acquire() as conn:
             return await conn.fetch(
             """
             SELECT *
-            FROM "list_queue"
-            WHERE pack_id = $1
-            """, 
-            pack_id)
+            FROM "list_queue" as lq
+            JOIN "pack" p ON lq.pack_id = p.id
+            WHERE p.courses_id = $1
+            """,
+            course_id)
 
     async def set_is_pass(self, user_id, pack_id):
         # устанавливает is_pass в True для пользователя в очереди
@@ -43,7 +44,9 @@ class QUEUE:
                 user_id,
                 pack_id
             )
-    async def leave_queue(self, user_id: int, pack_id: int) -> bool:
+        print(f"User {user_id} has passed pack {pack_id}")
+
+    async def leave_queue(self, user_id: int, pack_id: int):
         # удаляет пользователя из очереди
         async with self.pool.acquire() as conn:
             await conn.execute(
@@ -54,4 +57,14 @@ class QUEUE:
                 user_id,
                 pack_id
             )
-        return True
+        print(f"User {user_id} has left the queue for pack {pack_id}")
+
+    async def cleanup_job(self, course_id: int):
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                """DELETE FROM "list_queue" lq
+                JOIN "pack" p ON lq.pack_id = p.id
+                 WHERE lq.created_at < NOW() AND p.courses_id = $1
+                """,
+                course_id
+            )

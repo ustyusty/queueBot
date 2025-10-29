@@ -1,6 +1,6 @@
-from .db import db
+
 class GROUP:
-    def __init__(self):
+    def __init__(self, db):
         self.pool = db.pool
 
     async def get_group(self, title: str):

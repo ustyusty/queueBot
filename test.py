@@ -1,3 +1,2 @@
-a = None
-if a: print("a")
-else: print("b")
+from db.db import db
+print(db.pool)

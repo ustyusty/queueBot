@@ -1,7 +1,7 @@
-from .db import db
 from .group import GROUP
 class ADDUSER:
-    def __init__(self):
+    def __init__(self, db):
+        self.db = db
         self.pool = db.pool
 
     async def register_user(self, user, first_name, last_name, usergroup="47"):
@@ -9,7 +9,7 @@ class ADDUSER:
         Добавляет пользователя вместе с Telegram и группой.
         Если уже есть, обновляет данные.
         """
-        group_id = await GROUP().get_group(usergroup)
+        group_id = await GROUP(self.db).get_group(usergroup)
 
         async with self.pool.acquire() as conn:
             async with conn.transaction():
