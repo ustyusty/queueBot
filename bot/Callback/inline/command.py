@@ -15,21 +15,21 @@ class inlineCommand():
         course_title = context.user_data["step"]  # Extract course title from callback data
         course_id = await self.cousrse.get_course_id_by_title(course_title)  # Extract queue ID from callback data
         user_id = await self.userinfo.get_user_id(query.from_user.id)
-        await self.queue.put_on_queue(user_id, course_id, priority=0)
+        await self.queue.put_on_queue(user_id, course_id)
         await self.show_queue(query, context)
 
     async def set_done(self, query, context):  # mark as done
         course_title = context.user_data["step"]  # Extract course title from callback data
         user_id = await self.userinfo.get_user_id(query.from_user.id)
-        pack_id = await self.pack.get_pack_id_by_title(course_title)
-        await self.queue.set_is_pass(user_id, pack_id)
+        course_id = await self.cousrse.get_course_id_by_title(course_title)
+        await self.queue.set_is_pass(user_id, course_id)
         await self.show_queue(query, context)
 
     async def show_queue(self, query, context):  # show queue
         course_title = context.user_data["step"]  # Extract course title from callback data
         course_id = await self.cousrse.get_course_id_by_title(course_title)  # Extract queue ID from callback data
         rows = await self.queue.get_queue(course_id)
-        print("Результат запроса:", rows)
+        print("Результат запроса:", *rows, sep="\n")
         if not rows:
             await query.edit_message_text("📭 Очередь пуста", reply_markup=QueueListKeyboard.not_list(course_title))
             return
@@ -38,7 +38,7 @@ class inlineCommand():
         for i, r in enumerate(rows, 1):
             user_info = await self.userinfo.get_user_info(r['user_id'])
 
-            if await self.cousrse.get_courses_id_by_pack(r['pack_id']) != course_id:
+            if r['course_id'] != course_id:
                 continue
             name = user_info.get('firstname')
             surname = user_info.get('surname')
@@ -52,7 +52,7 @@ class inlineCommand():
 
     async def leave_queue(self, query, context):
         course_title = context.user_data["step"]  # Extract course title from callback data
-        pack_id = await self.pack.get_pack_id_by_title(course_title)
+        course_id = await self.cousrse.get_course_id_by_title(course_title)
         user_id = await self.userinfo.get_user_id(query.from_user.id)
-        await self.queue.leave_queue(user_id, pack_id)
+        await self.queue.leave_queue(user_id, course_id)
         await self.show_queue(query, context)
