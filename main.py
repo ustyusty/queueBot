@@ -33,8 +33,7 @@ async def main():
     await db.init()
     courses_titles = ['A', 'B', 'C']
     for i in range(len(courses_titles)):
-        course_id = await COURSES(db).get_course_id_by_title(courses_titles[i])
-        await PACK(db).add_pack(courses_titles[i], course_id)
+        await COURSES(db).add_courses(courses_titles[i])
 
 
 if __name__ == "__main__":

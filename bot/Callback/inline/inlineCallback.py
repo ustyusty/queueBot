@@ -9,12 +9,11 @@ class InlineCallbackHandler:
     def __init__(self, app: Application):
         self.app = app
         if db.pool: print("pool lives into callback")
-        command = inlineCommand(db)  # Pass additional argument if needed
-        # Create callback map for multiple queues
+        command = inlineCommand(db)
+
         self.callback_map = {"back_to_menu": self._back_to_menu}
         
-        # Add handlers for each queue (A, B, C)
-        courses_titles = ['A', 'B', 'C']  # Add new courses title here
+        courses_titles = ['A', 'B', 'C']  
         for queue_title in courses_titles:
             self.callback_map.update({
                 f"put_on_queue_{queue_title}": command.put_on_queue,
@@ -22,13 +21,13 @@ class InlineCallbackHandler:
                 f"leave_queue_{queue_title}": command.leave_queue,
                 f"done_{queue_title}": command.set_done,
             })
-
+        
         self.app.add_handler(CallbackQueryHandler(self.inline_callback))
 
     async def inline_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         if query.data.split('_')[0] =="show":
-            context.user_data["step"] = query.data.split('_')[-1]  # Extract course title from callback data
+            context.user_data["step"] = query.data.split('_')[-1] 
         print(context.user_data)
         print(f"⚡ Пришёл callback: {query.data}", flush=True)
         await query.answer()

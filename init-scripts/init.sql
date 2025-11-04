@@ -42,13 +42,13 @@ CREATE TABLE "user" (
 -- Таблица: pack
 -- ----------------------------
 
-CREATE TABLE pack (
-    id SERIAL PRIMARY KEY,
-    courses_id INTEGER REFERENCES courses(id) ON DELETE SET NULL,
-    title VARCHAR(255),
-    questions TEXT,
-    deadline DATE
-);
+-- CREATE TABLE pack (
+--     id SERIAL PRIMARY KEY,
+--     courses_id INTEGER REFERENCES courses(id) ON DELETE SET NULL,
+--     title VARCHAR(255),
+--     questions TEXT,
+--     deadline DATE
+-- );
 
 -- ----------------------------
 -- Таблица: list_queue
@@ -57,11 +57,10 @@ CREATE TABLE pack (
 CREATE TABLE list_queue (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES "user"(id) ON DELETE CASCADE,
-    pack_id INTEGER REFERENCES pack(id) ON DELETE CASCADE,
-    priority_queue INTEGER,
+    course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
     is_pass BOOLEAN DEFAULT FALSE,
     put_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE list_queue
-ADD CONSTRAINT unique_user_pack UNIQUE (user_id, pack_id);
+ADD CONSTRAINT unique_user_course UNIQUE (user_id, course_id);

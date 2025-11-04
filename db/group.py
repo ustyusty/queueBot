@@ -19,12 +19,14 @@ class GROUP:
     async def add_group(self, title: str):
         #добавляет групппу
         async with self.pool.acquire() as conn:
-            await conn.execute(
+            group_id = await conn.fetchval(
                 """
                 INSERT INTO "group" (title)
                 VALUES ($1)
                 ON CONFLICT (title) DO NOTHING
+                RETURNING id
                 """,
             title)
+        return group_id
     
     

@@ -8,10 +8,10 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 import tracemalloc
 tracemalloc.start()
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+# logging.basicConfig(
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#     level=logging.INFO
+# )
 
 
 if __name__ == "__main__":
