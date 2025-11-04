@@ -27,7 +27,6 @@ class DataBase:
         print("✅ Подключение к базе прошло успешно")
 
 
-
 async def main():
     db = DataBase()
     await db.init()
