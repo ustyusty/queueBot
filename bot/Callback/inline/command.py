@@ -37,7 +37,7 @@ class inlineCommand():
         for i, r in enumerate(rows, 1):
             user_info = await self.userinfo.get_user_info(r['user_id'])
 
-            if r['course_id'] != course_id:
+            if r['course_id'] != course_id or user_info is None:
                 continue
             name = user_info.get('firstname')
             surname = user_info.get('surname')
