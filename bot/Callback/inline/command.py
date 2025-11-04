@@ -37,7 +37,7 @@ class inlineCommand():
             return
         
         messages = []
-        for i, r in enumerate(rows, 1):
+        for r in rows:
             user_info = await self.userinfo.get_user_info(r['user_id'])
             if user_info is None:
                 continue
@@ -49,9 +49,9 @@ class inlineCommand():
             username = user_info.get('username')
             status = "✅" if r['is_pass'] else "⏳"
 
-            messages.append(f"{i}. {status} {name} {surname if surname else '💩'} @{username}")
-    
-        queue_text = "📋 Очередь:\n" + "\n".join(messages)
+            messages.append(f"{status} {name} {surname if surname else '💩'} @{username}")
+
+        queue_text = "📋 Очередь:\n" + "\n".join(f"{i}. {msg}" for i, msg in enumerate(messages, 1))
         await query.edit_message_text(queue_text, reply_markup=QueueListKeyboard.is_list(course_title))
 
     async def leave_queue(self, query, context):
