@@ -29,7 +29,6 @@ class inlineCommand():
         course_title = context.user_data["step"]  # Extract course title from callback data
         course_id = await self.cousrse.get_course_id_by_title(course_title)  # Extract queue ID from callback data
         rows = await self.queue.get_queue(course_id)
-        print("Результат запроса:", *rows, sep="\n")
         if not rows:
             await query.edit_message_text("📭 Очередь пуста", reply_markup=QueueListKeyboard.not_list(course_title))
             return

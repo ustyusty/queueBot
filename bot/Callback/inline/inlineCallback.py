@@ -8,7 +8,7 @@ from bot.massages import main_menu
 class InlineCallbackHandler:
     def __init__(self, app: Application):
         self.app = app
-        if db.pool: print("pool lives into callback")
+        #if db.pool: print("pool lives into callback")
         command = inlineCommand(db)
 
         self.callback_map = {"back_to_menu": self._back_to_menu}
@@ -27,9 +27,8 @@ class InlineCallbackHandler:
     async def inline_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         if query.data.split('_')[0] =="show":
-            context.user_data["step"] = query.data.split('_')[-1] 
-        print(context.user_data)
-        print(f"⚡ Пришёл callback: {query.data}", flush=True)
+            context.user_data["step"] = query.data.split('_')[-1]
+        #print(f"⚡ Пришёл callback: {query.data}", flush=True)
         await query.answer()
 
         handler = self.callback_map.get(query.data)
