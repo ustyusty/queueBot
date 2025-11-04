@@ -15,6 +15,9 @@ class inlineCommand():
         course_title = context.user_data["step"]  # Extract course title from callback data
         course_id = await self.cousrse.get_course_id_by_title(course_title)  # Extract queue ID from callback data
         user_id = await self.userinfo.get_user_id(query.from_user.id)
+        if user_id is None:
+            await query.edit_message_text("❗ Сначала зарегистрируйтесь с помощью команды /register")
+            return
         await self.queue.put_on_queue(user_id, course_id)
         await self.show_queue(query, context)
 
@@ -36,8 +39,10 @@ class inlineCommand():
         messages = []
         for i, r in enumerate(rows, 1):
             user_info = await self.userinfo.get_user_info(r['user_id'])
+            if user_info is None:
+                continue
 
-            if r['course_id'] != course_id or user_info is None:
+            if r['course_id'] != course_id:
                 continue
             name = user_info.get('firstname')
             surname = user_info.get('surname')
