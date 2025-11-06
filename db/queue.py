@@ -61,7 +61,7 @@ class QUEUE:
         async with self.pool.acquire() as conn:
             await conn.execute(
                 """DELETE FROM "list_queue"
-                 WHERE created_at < NOW() AND course_id = $1
+                 WHERE put_time < NOW() AND course_id = $1
                 """,
                 course_id
             )
