@@ -28,7 +28,6 @@ class InlineCallbackHandler:
         query = update.callback_query
         if query.data.split('_')[0] =="show":
             context.user_data["step"] = query.data.split('_')[-1]
-        #print(f"⚡ Пришёл callback: {query.data}", flush=True)
         await query.answer()
 
         handler = self.callback_map.get(query.data)

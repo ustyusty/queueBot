@@ -3,6 +3,9 @@ from db.queue import QUEUE
 from db.courses import COURSES
 from db.get_user_info import USERINFO
 from db.pack import PACK
+import logging
+
+
 class inlineCommand():
     def __init__(self, db):
         self.db = db

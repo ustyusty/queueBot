@@ -43,3 +43,7 @@ class CommandCallbackHandler:
         course_id = await COURSES(db).get_course_id_by_title(course_title)  #
         if user.id in [1007912517]:  # Replace with actual admin user IDs
             await QUEUE(db).cleanup_job(course_id)
+            await update.message.reply_text(
+                f"Оередь очищена"
+            )
+            await self.menu(update, context)
