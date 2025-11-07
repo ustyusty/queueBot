@@ -12,7 +12,6 @@ class BotApp:
 
     async def post_init(self, app):
         await db.init()
-        if db.pool: print("pool are borning into BotApp")
         self.register_handlers()
         #asyncio.create_task(cleanup_scheduler())
 
@@ -22,7 +21,6 @@ class BotApp:
             InlineCallbackHandler(self.application),
             RegistrationHandler(self.application),
         ]
-        print("handlers registratio succsess")
 
     def run(self):
         self.application.run_polling()

@@ -25,6 +25,16 @@ class COURSES:
                 """,
             title)
         return course_id
+    
+    async def get_courses_id(self):
+        async with self.pool.acquire() as conn:
+            courses_id = await conn.fetch(
+                """
+                SELECT id
+                FROM "courses"
+                """
+                )
+        return courses_id
 
     # async def get_courses_id_by_pack(self, pack_id: int):
     #     #вытаскивает id курса по id пака

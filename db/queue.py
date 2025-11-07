@@ -2,7 +2,7 @@ class QUEUE:
     def __init__(self, db):
         self.pool = db.pool
 
-    async def put_on_queue(self, user_id, course_id):
+    async def put_in_queue(self, user_id, course_id):
         # добавляет пользователя в очередь
         async with self.pool.acquire() as conn:
             async with conn.transaction():

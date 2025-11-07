@@ -22,7 +22,7 @@ class CommandCallbackHandler:
         if not await USERINFO(db).user_exists(user.id):
             await update.message.reply_text(
                 f"👋 Привет, {user.first_name}! "
-                "Добро пожаловать в наш бот.\n Пожалуйста, /register."
+                "Добро пожаловать в наш бот.\n Пожалуйста, зарегистрируйтесь, используя команду /register."
             )
         else:
             await update.message.reply_text(
@@ -31,7 +31,8 @@ class CommandCallbackHandler:
             await self.menu(update, context)
 
     async def menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
+        
+
         keyboard = MainMenuKeyboard.inline()
         await update.message.reply_text(
             main_menu.text,
