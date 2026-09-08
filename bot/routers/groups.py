@@ -41,3 +41,25 @@ class GroupRepo:
             ORDER BY title, id
             """
         )
+
+    async def update_group(self, group_id: int, title: str) -> Record | None:
+        return await self.db.fetchrow(
+            """
+            UPDATE groups
+            SET title = $2
+            WHERE id = $1
+            RETURNING id, title
+            """,
+            group_id,
+            title,
+        )
+
+    async def delete_group(self, group_id: int) -> Record | None:
+        return await self.db.fetchrow(
+            """
+            DELETE FROM groups
+            WHERE id = $1
+            RETURNING id, title
+            """,
+            group_id,
+        )

@@ -35,7 +35,7 @@ class QueueRepo:
                 queue.register_at,
                 queue.close_at,
                 users.tg_id,
-                users.nictname,
+                users.nicname,
                 users.username,
                 courses.title AS course_title,
                 groups.title AS group_title
@@ -66,7 +66,7 @@ class QueueRepo:
                 queue.register_at,
                 queue.close_at,
                 users.tg_id,
-                users.nictname,
+                users.nicname,
                 users.username,
                 courses.title AS course_title,
                 groups.title AS group_title

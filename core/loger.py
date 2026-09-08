@@ -1,5 +1,12 @@
-from logging import basicConfig
+import logging
+import os
 
-basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
+def setup_logging() -> None:
+    level_name = os.getenv("LOG_LEVEL", "INFO").upper()
+    level = getattr(logging, level_name, logging.INFO)
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
+    logging.getLogger("httpx").setLevel(logging.WARNING)

@@ -41,3 +41,25 @@ class CourseRepo:
             ORDER BY title, id
             """
         )
+
+    async def update_course(self, course_id: int, title: str) -> Record | None:
+        return await self.db.fetchrow(
+            """
+            UPDATE courses
+            SET title = $2
+            WHERE id = $1
+            RETURNING id, title
+            """,
+            course_id,
+            title,
+        )
+
+    async def delete_course(self, course_id: int) -> Record | None:
+        return await self.db.fetchrow(
+            """
+            DELETE FROM courses
+            WHERE id = $1
+            RETURNING id, title
+            """,
+            course_id,
+        )

@@ -1,10 +1,13 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from typing import Any
 from asyncpg import Record, Connection, create_pool, Pool, PostgresError
 from collections.abc import AsyncGenerator
 from .transaction import Transaction
 from .exceptions import DatabaseConnectionError, DatabaseQueryError
+
+logger = logging.getLogger(__name__)
 
 
 class DataBase:
@@ -46,7 +49,9 @@ class DataBase:
 
     async def connect(self) -> None:
         if self._pool is not None:
+            logger.debug("Database pool is already initialized")
             return
+        logger.info("Connecting to PostgreSQL")
         try:
             pool = await create_pool(
                 dsn = self._dsn,
@@ -58,11 +63,13 @@ class DataBase:
             )
             
         except (OSError, PostgresError) as error:
+            logger.exception("Failed to connect to PostgreSQL")
             raise DatabaseConnectionError(
                 "Failed to connect to PostgreSQL"
             ) from error
         else:
             self._pool = pool
+            logger.info("PostgreSQL connection pool initialized")
 
     async def fetchall(self, query: str, *args: Any) -> list[Record]:
         pool = self._require_pool()
@@ -71,6 +78,7 @@ class DataBase:
                 return await conn.fetch(query, *args)
     
         except PostgresError as error:
+            logger.exception("Database fetchall operation failed")
             raise DatabaseQueryError(
                 "Database fetchall operation failed"
             ) from error
@@ -82,6 +90,7 @@ class DataBase:
                 return await conn.fetchval(query, *args)
     
         except PostgresError as error:
+            logger.exception("Database fetchval operation failed")
             raise DatabaseQueryError(
                 "Database fetchval operation failed"
             ) from error
@@ -97,6 +106,7 @@ class DataBase:
                 return await conn.fetchrow(query, *args)
     
         except PostgresError as error:
+            logger.exception("Database fetchrow operation failed")
             raise DatabaseQueryError(
                 "Database fetchrow operation failed"
             ) from error
@@ -108,6 +118,7 @@ class DataBase:
                 return await conn.execute(query, *args)
             
         except PostgresError as error:
+            logger.exception("Database execute operation failed")
             raise DatabaseQueryError(
                 "Database execute operation failed"
             ) from error
@@ -147,7 +158,7 @@ class DataBase:
         
     async def close(self) -> None:
         if self._pool is not None:
+            logger.info("Closing PostgreSQL connection pool")
             await self._pool.close()
             self._pool = None
-        else:
-            pass
+            logger.info("PostgreSQL connection pool closed")

@@ -10,6 +10,7 @@ class UserShema(BaseModel):
     telegramId: int
     username: str | None
     nicname: str
+    is_admin: bool = False
 
 class QueuePiceShema(BaseModel):
     user: UserShema
