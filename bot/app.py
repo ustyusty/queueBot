@@ -39,7 +39,7 @@ class BotApp:
         db = DataBase(dsn=get_dsn()) 
         await db.connect()
         app.bot_data['db'] = db
-        app.bot_data['UserRouter'] = UserRepo(db)
+        app.bot_data['UserRepo'] = UserRepo(db)
         app.bot_data['CourseRepo'] = CourseRepo(db)
         app.bot_data['GroupRepo'] = GroupRepo(db)
         app.bot_data['QueueRepo'] = QueueRepo(db)

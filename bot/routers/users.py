@@ -1,5 +1,6 @@
 import logging
 
+from asyncpg import Record
 from database import DataBase
 from telegram import User
 
@@ -10,19 +11,48 @@ class UserRepo:
     def __init__(self, db: DataBase):
         self.db = db
 
-    async def register_user(self, user: User) -> int:
+    async def get_user(self, telegram_id: int) -> Record | None:
+        return await self.db.fetchrow(
+            """
+            SELECT id, tg_id, group_id, nicname, username, is_admin, register_at
+            FROM "user"
+            WHERE tg_id = $1
+            """,
+            telegram_id,
+        )
+
+    async def register_user(
+        self,
+        user: User,
+        nicname: str,
+        group_id: int,
+    ) -> int:
         return await self.db.fetchval(
             """
-            INSERT INTO "user" (tg_id, nicname, username)
-            VALUES ($1, $2, $3)
+            INSERT INTO "user" (tg_id, nicname, username, group_id)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (tg_id) DO UPDATE SET
                 nicname = EXCLUDED.nicname,
-                username = EXCLUDED.username
+                username = EXCLUDED.username,
+                group_id = EXCLUDED.group_id
             RETURNING id
             """,
             user.id,
-            user.first_name,
+            nicname,
             user.username,
+            group_id,
+        )
+
+    async def change_group(self, telegram_id: int, group_id: int) -> Record | None:
+        return await self.db.fetchrow(
+            """
+            UPDATE "user"
+            SET group_id = $2
+            WHERE tg_id = $1
+            RETURNING id, tg_id, group_id, nicname, username, is_admin, register_at
+            """,
+            telegram_id,
+            group_id,
         )
 
     async def is_admin(self, telegram_id: int) -> bool:

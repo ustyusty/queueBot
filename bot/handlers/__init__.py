@@ -10,11 +10,13 @@ from .admin import (
     list_courses,
     list_groups,
 )
-from .starting import help, start
+from .starting import help
+from .user import main_menu_handler, registration_handler
 
 
 def register_handler(app: Application) -> None:
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(registration_handler())
+    app.add_handler(main_menu_handler())
     app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("add_group", add_group))
     app.add_handler(CommandHandler("groups", list_groups))

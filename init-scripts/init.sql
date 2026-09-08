@@ -26,3 +26,7 @@ CREATE TABLE list_queue (
     register_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     close_at TIMESTAMP DEFAULT NULL
 );
+
+CREATE UNIQUE INDEX unique_active_queue_entry
+    ON list_queue (user_id, course_id)
+    WHERE is_pass = FALSE AND close_at IS NULL;

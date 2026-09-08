@@ -17,7 +17,7 @@ def admin_only(handler: Handler) -> Handler:
     @wraps(handler)
     async def wrapped(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         user = update.effective_user
-        user_repo: UserRepo | None = context.bot_data.get("UserRouter")
+        user_repo: UserRepo | None = context.bot_data.get("UserRepo")
         is_admin = (
             user is not None
             and user_repo is not None
