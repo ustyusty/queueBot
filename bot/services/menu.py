@@ -42,7 +42,7 @@ async def show_main_menu(
             for course in courses
         ]
         keyboard = InlineKeyboardMarkup(
-            [buttons[index:index + 2] for index in range(0, len(buttons), 2)]
+            [buttons[index:index + 1] for index in range(0, len(buttons), 1)]
         )
         text = MENU_TEXT
     else:

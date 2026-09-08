@@ -10,5 +10,13 @@ services:
       - ./init-scripts:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+  bot:
+    build: .
+    depends_on:
+      - queueDB
+    env_file:
+      - .env
+    command: python -m bot.app
+
 volumes:
   db_data:
