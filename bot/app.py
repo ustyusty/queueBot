@@ -1,10 +1,12 @@
 import logging
+from pathlib import Path
 
 from database import DataBase
 from telegram.ext import Application, ContextTypes
 
 from bot.handlers import register_handler
 from bot.routers import CourseRepo, GroupRepo, QueueRepo, UserRepo
+from bot.routers.assignments import AssignmentRepo
 from core.loger import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -38,11 +40,13 @@ class BotApp:
         logger.info("Starting bot initialization")
         db = DataBase(dsn=get_dsn()) 
         await db.connect()
+        await db.execute((Path(__file__).resolve().parent.parent / 'init-scripts' / '02-assignments.sql').read_text())
         app.bot_data['db'] = db
         app.bot_data['UserRepo'] = UserRepo(db)
         app.bot_data['CourseRepo'] = CourseRepo(db)
         app.bot_data['GroupRepo'] = GroupRepo(db)
         app.bot_data['QueueRepo'] = QueueRepo(db)
+        app.bot_data['AssignmentRepo'] = AssignmentRepo(db)
         logger.info("Bot initialization completed")
 
     async def post_shutdown(self, app: Application):

@@ -1,4 +1,5 @@
-from telegram.ext import Application, CommandHandler
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from .assignments import conversation_handler, callback
 
 from .admin import (
     add_course,
@@ -16,7 +17,9 @@ from .user import main_menu_handler, registration_handler
 
 
 def register_handler(app: Application) -> None:
+    app.add_handler(conversation_handler())
     app.add_handler(registration_handler())
+    app.add_handler(CallbackQueryHandler(callback, pattern=r'^study:(?:list:(?:homework|presentation):\d+|(?:view|file|qtext|qfile|done|undo|delete|remove):\d+|questions:\d+:\d+)$'))
     app.add_handler(main_menu_handler())
     app.add_handler(CommandHandler("help", help))
     app.add_handler(CommandHandler("add_group", add_group))

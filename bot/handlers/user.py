@@ -12,6 +12,7 @@ from bot.services.menu import (
     COURSE_CALLBACK_PREFIX,
     DONE_CALLBACK_PREFIX,
     JOIN_CALLBACK_PREFIX,
+    QUEUE_MENU_CALLBACK_DATA,
     menu_callback,
 )
 from bot.services.register import (
@@ -50,6 +51,6 @@ def main_menu_handler() -> CallbackQueryHandler:
         pattern=(
             rf"^(?:{COURSE_CALLBACK_PREFIX}\d+|"
             rf"{JOIN_CALLBACK_PREFIX}\d+|{DONE_CALLBACK_PREFIX}\d+|"
-            rf"{BACK_CALLBACK_DATA})$"
+            rf"{BACK_CALLBACK_DATA}|{QUEUE_MENU_CALLBACK_DATA})$"
         ),
     )

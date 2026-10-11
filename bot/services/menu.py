@@ -11,12 +11,12 @@ COURSE_CALLBACK_PREFIX = "queue_course:"
 JOIN_CALLBACK_PREFIX = "queue_join:"
 DONE_CALLBACK_PREFIX = "queue_done:"
 BACK_CALLBACK_DATA = "queue_back"
+QUEUE_MENU_CALLBACK_DATA = "queue_menu"
 
 MENU_TEXT = (
-    "🎓✨ <b>QueueBot — очередь без суеты!</b>\n\n"
-    "Здесь не нужно караулить преподавателя у двери и выяснять, кто за кем 😌\n"
-    "Выбирай предмет — и я покажу текущую очередь.\n\n"
-    "👇 <b>Какой предмет смотрим?</b>"
+    "🎓 <b>QueueBot</b>\n\n"
+    "Очереди, домашние задания и подготовка к презентациям.\n\n"
+    "👇 <b>Выбери раздел:</b>"
 )
 
 
@@ -26,38 +26,34 @@ async def show_main_menu(
     *,
     edit: bool = False,
 ) -> None:
-    course_repo: CourseRepo | None = context.bot_data.get("CourseRepo")
     message = update.effective_message
-    if course_repo is None or message is None:
-        logger.error("Cannot show main menu: CourseRepo or message is missing")
+    if message is None:
         return
-
-    courses = await course_repo.get_courses()
-    if courses:
-        buttons = [
-            InlineKeyboardButton(
-                f"📚 {course['title']}",
-                callback_data=f"{COURSE_CALLBACK_PREFIX}{course['id']}",
-            )
-            for course in courses
-        ]
-        keyboard = InlineKeyboardMarkup(
-            [buttons[index:index + 1] for index in range(0, len(buttons), 1)]
-        )
-        text = MENU_TEXT
-    else:
-        keyboard = None
-        text = "🎓 <b>QueueBot</b>\n\nПока нет доступных предметов. Загляни чуть позже 👀"
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton('🧑‍🤝‍🧑 Очереди', callback_data=QUEUE_MENU_CALLBACK_DATA)],
+        [InlineKeyboardButton('📝 Домашние задания', callback_data='study:list:homework:0')],
+        [InlineKeyboardButton('🎤 Презентации и вопросы', callback_data='study:list:presentation:0')],
+    ])
 
     if edit and update.callback_query is not None:
         await update.callback_query.edit_message_text(
-            text,
+            MENU_TEXT,
             reply_markup=keyboard,
             parse_mode="HTML",
         )
     else:
-        await message.reply_text(text, reply_markup=keyboard, parse_mode="HTML")
-    logger.info("Main menu displayed: courses=%s", len(courses))
+        await message.reply_text(MENU_TEXT, reply_markup=keyboard, parse_mode="HTML")
+    logger.info("Main menu displayed")
+
+
+async def show_queue_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    repo: CourseRepo = context.bot_data['CourseRepo']
+    courses = await repo.get_courses()
+    buttons = [[InlineKeyboardButton(f"📚 {_short(course['title'], 80)}",
+                callback_data=f"{COURSE_CALLBACK_PREFIX}{course['id']}")] for course in courses]
+    buttons.append([InlineKeyboardButton('⬅️ Главное меню', callback_data=BACK_CALLBACK_DATA)])
+    text = '🧑‍🤝‍🧑 Очереди\n\nВыбери предмет:' if courses else '🧑‍🤝‍🧑 Очереди\n\nПока нет доступных предметов.'
+    await update.callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(buttons))
 
 
 def _callback_id(data: str | None, prefix: str) -> int | None:
@@ -102,7 +98,7 @@ async def _render_queue(
         await query.edit_message_text(
             "Этот предмет больше недоступен.",
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("⬅️ Назад", callback_data=BACK_CALLBACK_DATA)]]
+                [[InlineKeyboardButton("⬅️ К предметам", callback_data=QUEUE_MENU_CALLBACK_DATA)]]
             ),
         )
         return
@@ -142,7 +138,7 @@ async def _render_queue(
         buttons.append(
             [InlineKeyboardButton("➕ Встать в очередь", callback_data=f"{JOIN_CALLBACK_PREFIX}{course_id}")]
         )
-    buttons.append([InlineKeyboardButton("⬅️ Назад", callback_data=BACK_CALLBACK_DATA)])
+    buttons.append([InlineKeyboardButton("⬅️ К предметам", callback_data=QUEUE_MENU_CALLBACK_DATA)])
     await query.edit_message_text(
         "\n".join(lines),
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -160,6 +156,11 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     if query is None:
         return
     data = query.data
+
+    if data == QUEUE_MENU_CALLBACK_DATA:
+        await query.answer()
+        await show_queue_menu(update, context)
+        return
 
     if data == BACK_CALLBACK_DATA:
         await query.answer()

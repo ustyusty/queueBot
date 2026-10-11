@@ -47,6 +47,8 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/help — показать эту справку",
         "/change_group — сменить свою группу",
         "/cancel — отменить текущее действие",
+        "/add_presentation — добавить презентацию и подготовленные вопросы",
+        "Домашки и презентации доступны кнопками в главном меню.",
     ]
 
     if user is not None and repo is not None and await repo.is_admin(user.id):
@@ -54,6 +56,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             [
                 "",
                 "Команды администратора:",
+                "/add_homework — добавить домашнее задание для своей группы",
                 "/add_group <название> — добавить группу",
                 "/groups — показать группы",
                 "/edit_group <ID> <название> — переименовать группу",
