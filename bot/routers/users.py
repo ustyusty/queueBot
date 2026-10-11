@@ -11,14 +11,18 @@ class UserRepo:
     def __init__(self, db: DataBase):
         self.db = db
 
-    async def get_user(self, telegram_id: int) -> Record | None:
+    async def get_user(self, telegram_id: int = None, username: str = None) -> Record | None:
+        if telegram_id is None and username is None:
+            raise ValueError("Either telegram_id or username must be provided")
+        argument = ["tg_id" if telegram_id is not None else "username", 
+                    telegram_id if telegram_id is not None else username]
         return await self.db.fetchrow(
-            """
+            f"""
             SELECT id, tg_id, group_id, nicname, username, is_admin, register_at
             FROM "user"
-            WHERE tg_id = $1
+            WHERE {argument[0]} = $1
             """,
-            telegram_id,
+            argument[1]
         )
 
     async def register_user(

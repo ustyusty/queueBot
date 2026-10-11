@@ -62,6 +62,7 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 "/subjects — показать предметы",
                 "/edit_subject <ID> <название> — переименовать предмет",
                 "/delete_subject <ID> — удалить предмет",
+                "/add_admin <username> — добавить администратора",
             ]
         )
 

@@ -9,6 +9,7 @@ from .admin import (
     edit_group,
     list_courses,
     list_groups,
+    add_admin
 )
 from .starting import help
 from .user import main_menu_handler, registration_handler
@@ -26,3 +27,4 @@ def register_handler(app: Application) -> None:
     app.add_handler(CommandHandler("subjects", list_courses))
     app.add_handler(CommandHandler("edit_subject", edit_course))
     app.add_handler(CommandHandler("delete_subject", delete_course))
+    app.add_handler(CommandHandler("add_admin", add_admin))

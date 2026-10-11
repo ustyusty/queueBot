@@ -66,6 +66,36 @@ def _id_and_title(args: list[str]) -> tuple[int, str] | None:
     title = _title(args[1:])
     return (item_id, title) if title else None
 
+@admin_only
+async def add_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if len(context.args) != 1:
+        await _reply(update, "Использование: /add_admin <username>")
+        return
+    repo: UserRepo = _repo(context, "UserRepo")
+    try:
+        username = context.args[0].lstrip("@")
+        
+        user = await repo.get_user(username=username)
+        if user is None:
+            await _reply(update, f"Пользователь с username @{username} не найден.")
+            return
+        tg_id = user["tg_id"]
+    except Exception as e:
+        logger.exception("Failed to retrieve user by username: %s", context.args[0])
+        await _reply(update, "Не удалось найти пользователя. Убедитесь, что username указан верно.")
+        return
+    if user["is_admin"]:
+        await _reply(update, f"Пользователь @{username} уже является администратором.")
+        return
+    try:
+        await repo.set_admin(tg_id, is_admin=True)
+    except DatabaseQueryError:
+        logger.exception("Failed to add admin: tg_id=%s", tg_id)
+        await _reply(update, "Не удалось добавить администратора. Возможно, пользователь уже является администратором.")
+        return
+    logger.info("Admin added: user=%s tg_id=%s", user["username"], tg_id)
+    await _reply(update, f"Пользователь @{user['username']} добавлен в администраторы.")
+
 
 @admin_only
 async def add_group(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
