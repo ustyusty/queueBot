@@ -14,10 +14,11 @@ class AssignmentRepo:
 
     async def get(self, item_id, group_id, user_id):
         return await self.db.fetchrow(
-            """SELECT a.*, c.title AS course_title,
+            """SELECT a.*, c.title AS course_title, u.username AS author_username, u.nicname AS author_nickname,
                EXISTS (SELECT 1 FROM assignment_progress p
                        WHERE p.assignment_id = a.id AND p.user_id = $3) AS completed
                FROM assignments a JOIN courses c ON c.id = a.course_id
+               LEFT JOIN "user" u ON u.id = a.author_id
                WHERE a.id = $1 AND a.group_id = $2""", item_id, group_id, user_id)
 
     async def create(self, draft, user):
@@ -49,3 +50,25 @@ class AssignmentRepo:
 
     async def delete(self, item_id):
         await self.db.execute("DELETE FROM assignments WHERE id=$1", item_id)
+
+    async def update_presentation(self, item_id, user_id, draft, field):
+        if field == 'file':
+            return await self.db.fetchval(
+                """UPDATE assignments SET file_id=$3, file_type='document'
+                   WHERE id=$1 AND author_id=$2 AND kind='presentation' RETURNING id""",
+                item_id, user_id, draft.get('file_id'))
+        if field == 'questions':
+            return await self.db.fetchval(
+                """WITH updated AS (
+                   UPDATE assignments SET questions_text=$3, questions_file_id=$4
+                   WHERE id=$1 AND author_id=$2 AND kind='presentation' RETURNING id
+                   ), removed AS (
+                   DELETE FROM presentation_questions WHERE assignment_id IN (SELECT id FROM updated)
+                   ) SELECT id FROM updated""", item_id, user_id,
+                draft.get('questions_text'), draft.get('questions_file_id'))
+        if field == 'details':
+            return await self.db.fetchval(
+                """UPDATE assignments SET title=$3, description=$4, deadline=$5
+                   WHERE id=$1 AND author_id=$2 AND kind='presentation' RETURNING id""",
+                item_id, user_id, draft['title'], draft['description'], draft['deadline'])
+        raise ValueError('Unknown presentation field')

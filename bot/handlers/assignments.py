@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 LOCAL_TIME = ZoneInfo('Asia/Novosibirsk')
 COURSE, TITLE, DESCRIPTION, DEADLINE, FILE, CONFIRM, QUESTION, ANSWER = range(20, 28)
 PRESENTATION_QUESTIONS = 28
+EDIT_FILE, EDIT_QUESTIONS = 29, 30
 LABELS = {'homework': '📝 Домашние задания', 'presentation': '🎤 Презентации'}
 
 
@@ -27,6 +28,25 @@ async def send(update, text, buttons=None, *, file_id=None, file_type='document'
     markup = Keyboard(buttons) if buttons else None
     message = update.effective_message
     current_media = message.photo or message.document
+    if len(text.encode('utf-16-le')) // 2 > 4096:
+        # Keep all questions, even when a card exceeds Telegram's message limit.
+        if file_id:
+            sender = message.reply_photo if file_type == 'photo' else message.reply_document
+            await sender(file_id)
+        chunks, chunk, size = [], '', 0
+        for character in text:
+            width = len(character.encode('utf-16-le')) // 2
+            if size + width > 4096:
+                chunks.append(chunk)
+                chunk, size = '', 0
+            chunk += character
+            size += width
+        chunks.append(chunk)
+        for index, chunk in enumerate(chunks):
+            await message.reply_text(chunk, reply_markup=markup if index == len(chunks) - 1 else None)
+        if update.callback_query:
+            await update.callback_query.edit_message_reply_markup(reply_markup=None)
+        return
     if file_id:
         # Telegram captions are limited to 1024 UTF-16 code units.
         fits_caption = len(text.encode('utf-16-le')) // 2 <= 1024
@@ -84,30 +104,41 @@ async def show_item(update, context, item):
     text = (f"{LABELS[item['kind']]}\n📚 {item['course_title'][:100]}\n\n{item['title']}\n"
             f"📅 {date_text(item['deadline'])} (Новосибирск)\n\n{item['description']}")
     buttons = []
-    if item['file_id'] and item['kind'] != 'homework':
-        buttons.append([Button('📎 Скачать файл', callback_data=f"study:file:{item['id']}")])
     if item['kind'] == 'homework':
         text += '\n\n✅ Выполнено' if item['completed'] else '\n\n⬜ Ещё не выполнено'
         action = 'undo' if item['completed'] else 'done'
         buttons.append([Button('↩️ Снять отметку' if item['completed'] else '✅ Выполнено', callback_data=f"study:{action}:{item['id']}")])
     else:
         questions = await repo.questions(item['id'])
-        text += f'\n\n❓ Подготовленных вопросов: {len(questions)}'
-        if questions:
-            buttons.append([Button('❓ Вопросы и ответы', callback_data=f"study:questions:{item['id']}:0")])
+        speaker = '@' + item['author_username'] if item['author_username'] else item['author_nickname'] or 'Не указан'
+        text += f'\n\n🎤 Докладчик: {speaker}'
         if item['questions_text']:
-            buttons.append([Button('📝 Вопросы автора', callback_data=f"study:qtext:{item['id']}")])
+            text += '\n\n❓ Вопросы:\n' + item['questions_text']
+        for index, question_item in enumerate(questions, 1):
+            text += f"\n\n❓ {index}. {question_item['question']}\n💡 {question_item['answer']}"
         if item['questions_file_id']:
-            buttons.append([Button('📎 Файл с вопросами', callback_data=f"study:qfile:{item['id']}")])
-        if user['is_admin'] or item['author_id'] == user['id']:
-            buttons.append([Button('➕ Добавить вопрос', callback_data=f"study:question:{item['id']}")])
+            text += '\n\n📎 Вопросы прикреплены файлом.'
+        if not (questions or item['questions_text'] or item['questions_file_id']):
+            text += '\n\n❓ Вопросы пока не добавлены.'
+        if item['author_id'] == user['id']:
+            buttons.extend([
+                [Button('✏️ Название, описание и дата', callback_data=f"study:edit:details:{item['id']}")],
+                [Button('📎 Изменить презентацию', callback_data=f"study:edit:file:{item['id']}")],
+                [Button('✏️ Изменить вопросы', callback_data=f"study:edit:questions:{item['id']}")],
+                [Button('➕ Добавить вопрос', callback_data=f"study:question:{item['id']}")],
+            ])
     if user['is_admin'] or item['author_id'] == user['id']:
         buttons.append([Button('🗑 Удалить', callback_data=f"study:delete:{item['id']}")])
     buttons.append([Button('⬅️ К списку', callback_data=f"study:list:{item['kind']}:0")])
     if item['kind'] == 'homework':
         await send(update, text, buttons, file_id=item['file_id'], file_type=item['file_type'])
     else:
-        await send(update, text, buttons)
+        if item['file_id'] and item['questions_file_id']:
+            await update.effective_message.reply_document(item['file_id'], caption='📎 Презентация')
+            await update.effective_message.reply_document(item['questions_file_id'], caption='❓ Вопросы к презентации')
+            await send(update, text, buttons)
+        else:
+            await send(update, text, buttons, file_id=item['file_id'] or item['questions_file_id'])
 
 
 async def callback(update, context):
@@ -224,9 +255,11 @@ async def description(update, context):
 
 
 async def ask_attachment(update, context):
+    if context.user_data['study_draft'].get('edit_field') == 'details':
+        return await confirm(update, context)
     presentation = context.user_data['study_draft'].get('kind') == 'presentation'
     await update.effective_message.reply_text(
-        'Загрузи свою презентацию документом (например PPTX или PDF).'
+        'Загрузи свою презентацию документом (например PPTX или PDF), либо /skip — без презентации.'
         if presentation else 'Прикрепи документ или фото, либо нажми /skip.')
     return FILE
 
@@ -292,16 +325,41 @@ async def deadline(update, context):
 async def attachment(update, context):
     draft = context.user_data['study_draft']
     message = update.effective_message
-    if draft['kind'] == 'presentation' and not message.document:
+    if draft['kind'] == 'presentation' and not message.document and (message.text or '').split('@')[0] != '/skip':
         await message.reply_text('Для презентации нужен документ. Загрузи PPTX, PDF или другой файл.')
         return FILE
     draft['file_type'] = 'photo' if message.photo else 'document'
     draft['file_id'] = (message.photo[-1].file_id if message.photo else
                         message.document.file_id if message.document else None)
     if draft['kind'] == 'presentation':
+        if draft.get('edit_field') == 'file':
+            return await confirm(update, context)
         await message.reply_text('Теперь отправь подготовленные вопросы (можно вместе с ответами) одним текстовым сообщением или отдельным файлом. Текст — до 3500 символов.')
         return PRESENTATION_QUESTIONS
     return await confirm(update, context)
+
+
+async def begin_edit(update, context):
+    await update.callback_query.answer()
+    user = await user_for(update, context)
+    if user is None:
+        return ConversationHandler.END
+    _, _, field, item_id = update.callback_query.data.split(':')
+    item = await context.bot_data['AssignmentRepo'].get(int(item_id), user['group_id'], user['id'])
+    if not item or item['kind'] != 'presentation' or item['author_id'] != user['id']:
+        await update.effective_message.reply_text('Редактировать может только докладчик.')
+        return ConversationHandler.END
+    draft = dict(item)
+    draft['edit_field'] = field
+    context.user_data['study_draft'] = draft
+    if field == 'file':
+        await update.effective_message.reply_text('Отправь новый файл презентации. /skip — убрать файл. /cancel — отменить.')
+        return EDIT_FILE
+    if field == 'questions':
+        await update.effective_message.reply_text('Отправь новые вопросы текстом или документом. Они заменят прежние вопросы. /cancel — отменить.')
+        return EDIT_QUESTIONS
+    await update.effective_message.reply_text('Напиши новое название (до 150 символов). /cancel — отменить.')
+    return TITLE
 
 
 async def presentation_questions(update, context):
@@ -326,7 +384,7 @@ async def confirm(update, context):
     await update.effective_message.reply_text(
         f"{LABELS[draft['kind']]}\n\n{draft['title']}\n📅 {date_text(draft['deadline'])}\n\n{draft['description']}\n\n"
         + ('📎 Файл прикреплён\n\n' if draft['file_id'] else '') + questions_notice + 'Опубликовать для твоей группы?',
-        reply_markup=Keyboard([[Button('✅ Опубликовать', callback_data='study:publish')], [Button('Отмена', callback_data='study:cancel')]]))
+        reply_markup=Keyboard([[Button('✅ Сохранить' if draft.get('edit_field') else '✅ Опубликовать', callback_data='study:publish')], [Button('Отмена', callback_data='study:cancel')]]))
     return CONFIRM
 
 
@@ -337,18 +395,23 @@ async def publish(update, context):
     if not user or not draft or (draft['kind'] == 'homework' and not user['is_admin']):
         await update.effective_message.reply_text('Публикация недоступна. Запусти создание заново.')
         return ConversationHandler.END
-    if draft['kind'] == 'presentation' and (not draft.get('file_id') or
-            not (draft.get('questions_text') or draft.get('questions_file_id'))):
-        await update.effective_message.reply_text('Нужны файл презентации и вопросы. Начни создание заново: /cancel, затем /add_presentation.')
+    if draft['kind'] == 'presentation' and not draft.get('edit_field') and not (draft.get('questions_text') or draft.get('questions_file_id')):
+        await update.effective_message.reply_text('Нужны вопросы. Начни создание заново: /cancel, затем /add_presentation.')
         return ConversationHandler.END
     try:
-        item_id = await context.bot_data['AssignmentRepo'].create(draft, user)
+        if draft.get('edit_field'):
+            item_id = await context.bot_data['AssignmentRepo'].update_presentation(draft['id'], user['id'], draft, draft['edit_field'])
+            if item_id is None:
+                await update.effective_message.reply_text('Презентация недоступна или ты не её автор.')
+                return ConversationHandler.END
+        else:
+            item_id = await context.bot_data['AssignmentRepo'].create(draft, user)
     except DatabaseQueryError:
         logger.exception('Cannot publish assignment')
         await update.effective_message.reply_text('Не удалось сохранить. Проверь, что предмет и группа существуют, и попробуй ещё раз.')
         return CONFIRM
     context.user_data.pop('study_draft', None)
-    await send(update, '✅ Опубликовано!', [[Button('Открыть', callback_data=f'study:view:{item_id}')]])
+    await send(update, '✅ Сохранено!' if draft.get('edit_field') else '✅ Опубликовано!', [[Button('Открыть', callback_data=f'study:view:{item_id}')]])
     return ConversationHandler.END
 
 
@@ -359,8 +422,8 @@ async def begin_question(update, context):
         return ConversationHandler.END
     item_id = int(update.callback_query.data.split(':')[2])
     item = await context.bot_data['AssignmentRepo'].get(item_id, user['group_id'], user['id'])
-    if not item or item['kind'] != 'presentation' or not (user['is_admin'] or item['author_id'] == user['id']):
-        await update.effective_message.reply_text('Вопросы добавляет автор презентации или администратор.')
+    if not item or item['kind'] != 'presentation' or item['author_id'] != user['id']:
+        await update.effective_message.reply_text('Вопросы добавляет только докладчик.')
         return ConversationHandler.END
     context.user_data['study_question'] = {'item_id': item_id}
     await update.effective_message.reply_text('Напиши вопрос (до 1000 символов). Отмена: /cancel.')
@@ -386,7 +449,7 @@ async def answer(update, context):
     draft = context.user_data['study_question']
     repo = context.bot_data['AssignmentRepo']
     item = await repo.get(draft['item_id'], user['group_id'], user['id']) if user else None
-    if not item or not (user['is_admin'] or item['author_id'] == user['id']):
+    if not item or item['author_id'] != user['id']:
         await update.effective_message.reply_text('Презентация больше недоступна.')
         return ConversationHandler.END
     try:
@@ -414,12 +477,15 @@ def conversation_handler():
     return ConversationHandler(
         entry_points=[CommandHandler('add_homework', begin), CommandHandler('add_presentation', begin),
                       CallbackQueryHandler(begin, pattern=r'^study:new:(homework|presentation)$'),
+                      CallbackQueryHandler(begin_edit, pattern=r'^study:edit:(file|questions|details):\d+$'),
                       CallbackQueryHandler(begin_question, pattern=r'^study:question:\d+$')],
         states={COURSE: [CallbackQueryHandler(choose_course, pattern=r'^study:course:\d+$')],
                 TITLE: [MessageHandler(text, title)], DESCRIPTION: [MessageHandler(text, description)],
                 DEADLINE: [CallbackQueryHandler(deadline_callback, pattern=r'^study:date:'), CommandHandler('skip', deadline), MessageHandler(text, deadline)],
                 FILE: [CommandHandler('skip', attachment), MessageHandler(filters.Document.ALL | filters.PHOTO, attachment)],
                 PRESENTATION_QUESTIONS: [MessageHandler(text | filters.Document.ALL, presentation_questions)],
+                EDIT_FILE: [CommandHandler('skip', attachment), MessageHandler(filters.Document.ALL, attachment)],
+                EDIT_QUESTIONS: [MessageHandler(text | filters.Document.ALL, presentation_questions)],
                 CONFIRM: [CallbackQueryHandler(publish, pattern=r'^study:publish$'), CallbackQueryHandler(cancel, pattern=r'^study:cancel$')],
                 QUESTION: [MessageHandler(text, question)], ANSWER: [MessageHandler(text, answer)]},
         fallbacks=[CommandHandler('cancel', cancel), CommandHandler('start', cancel)],
